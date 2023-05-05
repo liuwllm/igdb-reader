@@ -1,5 +1,6 @@
 from igdb.wrapper import IGDBWrapper
 from decouple import config
+from platformid import platform_ids
 import pandas as pd
 import json
 import ast
@@ -28,7 +29,7 @@ alltime_entries = 0
 
 # Checks to see if you want the games outputted to have release dates or have a release date of TBD
 # True = release dates, False = TBD
-want_release_date = False
+want_release_date = True
 if want_release_date:
     release_date = 'release_dates.date > ' + str(current_time) + '; '
 else:
@@ -43,8 +44,8 @@ dataframe_list = []
 for offset in range(alltime_entries, total_entries, limit_value):
 
     # POST request for data on upcoming titles on PC including name, publisher, release date, website links
-    post_req = 'fields name,involved_companies.company.name,release_dates.human,websites.url; ' \
-               'where involved_companies.publisher = true & platforms = 6 & ' + release_date + '' \
+    post_req = 'fields name,involved_companies.company.name,release_dates.human,platforms,websites.url; ' \
+               'where involved_companies.publisher = true & ' + release_date + '' \
                'sort date asc; ' \
                'limit ' + str(limit_value) + '; ' \
                'offset ' + str(offset) + ';'
@@ -63,7 +64,7 @@ for offset in range(alltime_entries, total_entries, limit_value):
     # Converts JSON to dataframe
     dataframe = pd.read_json(json_result)
 
-    # Cleans up data by inserting only relevant data points into each cell
+    # Cleans up data by inserting only relevant data points into each cell & converts platform ids to names
     for entry in range(len(dataframe)):
         company_list = []
         if type(dataframe['involved_companies'][entry]) == list:
@@ -83,11 +84,21 @@ for offset in range(alltime_entries, total_entries, limit_value):
                 website_list.append(website['url'])
             dataframe['websites'][entry] = website_list
 
+        platform_list = []
+        if type(dataframe['platforms'][entry]) == list:
+            for platform in dataframe['platforms'][entry]:
+                if platform in platform_ids:
+                    platform_list.append(platform_ids[platform])
+                else:
+                    platform_list.append(platform)
+            dataframe['platforms'][entry] = platform_list
+
     # Appends dataframe to the dataframe list
     dataframe_list.append(dataframe)
 
 # Combines all dataframes into one dataframe
 combined_dataframe = pd.concat(dataframe_list)
+
 
 # Converts to dataframe to csv
 csv_name = 'database' + str(time.time()) + '.csv'
