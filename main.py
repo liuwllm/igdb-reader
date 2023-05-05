@@ -10,6 +10,9 @@ CLIENT_ID = config('CLIENT_ID')
 AUTHORIZATION = config('AUTHORIZATION')
 wrapper = IGDBWrapper(CLIENT_ID, AUTHORIZATION)
 
+# PARAMETERS
+####################
+
 # Current time as unix timestamp; appended to csv name
 current_time = 1683225945
 
@@ -23,9 +26,6 @@ total_entries = 1000
 # Can use as an offset if you don't want to start search from beginning of database
 alltime_entries = 0
 
-# List to hold all dataframes to be combined later on
-dataframe_list = []
-
 # Checks to see if you want the games outputted to have release dates or have a release date of TBD
 # True = release dates, False = TBD
 want_release_date = False
@@ -33,6 +33,11 @@ if want_release_date:
     release_date = 'release_dates.date > ' + str(current_time) + '; '
 else:
     release_date = 'release_dates.category = 7; '
+
+####################
+
+# List to hold all dataframes to be combined later on
+dataframe_list = []
 
 # Sends multiple POST requests using the previously defined parameters
 for offset in range(alltime_entries, total_entries, limit_value):
